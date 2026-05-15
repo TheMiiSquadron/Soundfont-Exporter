@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Soundfont Exporter</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">SF2 Builder</p>
+          <h1>Soundfont Exporter</h1>
+        </div>
+        <button id="exportButton" class="primary" disabled>Export .sf2</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel import-panel">
+          <label class="drop-zone" id="dropZone">
+            <input id="fileInput" type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aiff,.aif" multiple>
+            <span class="drop-icon">+</span>
+            <span class="drop-title">Import audio files</span>
+            <span class="drop-copy">Drop files here or click to browse. Built for 30+ samples.</span>
+          </label>
+
+          <div class="settings">
+            <label>
+              Soundfont name
+              <input id="fontName" type="text" value="Custom Soundfont" maxlength="64">
+            </label>
+            <label>
+              Preset name
+              <input id="presetName" type="text" value="Imported Samples" maxlength="20">
+            </label>
+            <div class="split">
+              <label>
+                Bank
+                <input id="bankNumber" type="number" value="0" min="0" max="16383">
+              </label>
+              <label>
+                Preset
+                <input id="presetNumber" type="number" value="0" min="0" max="127">
+              </label>
+            </div>
+            <div class="split">
+              <label>
+                First key
+                <select id="firstKey"></select>
+              </label>
+              <button id="autoMapButton" class="secondary" disabled>Auto-map</button>
+            </div>
+            <label class="check-row">
+              <input id="wideRangeMode" type="checkbox">
+              Wider LMMS test ranges
+            </label>
+          </div>
+        </aside>
+
+        <section class="panel sample-panel">
+          <div class="sample-header">
+            <div>
+              <h2>Samples</h2>
+              <p id="statusText">No audio imported yet.</p>
+            </div>
+            <button id="clearButton" class="ghost" disabled>Clear</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Length</th>
+                  <th>Root</th>
+                  <th>Low</th>
+                  <th>High</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="sampleTable">
+                <tr class="empty-row">
+                  <td colspan="6">Import WAV, MP3, OGG, FLAC, M4A, AIFF, or any browser-decodable audio.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
