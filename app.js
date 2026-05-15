@@ -14,6 +14,7 @@ const wideRangeInput = document.querySelector("#wideRangeMode");
 
 let samples = [];
 let audioContext;
+let importNotice = "";
 
 const textEncoder = new TextEncoder();
 const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -38,6 +39,7 @@ dropZone.addEventListener("drop", (event) => {
 
 clearButton.addEventListener("click", () => {
   samples = [];
+  importNotice = "";
   render();
 });
 
@@ -69,13 +71,18 @@ exportButton.addEventListener("click", async () => {
 });
 
 async function importFiles(fileList) {
-  const files = [...fileList].filter((file) => file.type.startsWith("audio/") || /\.(wav|mp3|ogg|flac|m4a|aiff?|aac)$/i.test(file.name));
+  const incomingFiles = [...fileList];
+  const files = incomingFiles.filter((file) => file.type.startsWith("audio/") || /\.(wav|mp3|ogg|flac|m4a|aiff?|aac)$/i.test(file.name));
   if (!files.length) return;
 
   audioContext ||= new AudioContext();
   setBusy(`Decoding ${files.length} file${files.length === 1 ? "" : "s"}...`);
 
   let imported = 0;
+  const skipped = incomingFiles
+    .filter((file) => !files.includes(file))
+    .map((file) => ({ name: file.name, reason: "not a supported audio file" }));
+
   for (const file of files) {
     try {
       const buffer = await file.arrayBuffer();
@@ -98,10 +105,12 @@ async function importFiles(fileList) {
       render();
     } catch (error) {
       console.warn(`Skipping ${file.name}`, error);
+      skipped.push({ name: file.name, reason: readableError(error) });
     }
   }
 
   fileInput.value = "";
+  importNotice = importResultMessage(imported, skipped);
   render();
 }
 
@@ -142,7 +151,9 @@ function render() {
 
     const totalSeconds = samples.reduce((sum, sample) => sum + sample.duration, 0);
     statusText.classList.remove("busy");
-    statusText.textContent = `${samples.length} sample${samples.length === 1 ? "" : "s"} loaded, ${formatDuration(totalSeconds)} total.`;
+    statusText.textContent = importNotice || `${samples.length} sample${samples.length === 1 ? "" : "s"} loaded, ${formatDuration(totalSeconds)} total.`;
+    const mappingWarning = singleKeyMappingWarning();
+    if (mappingWarning) statusText.textContent += ` ${mappingWarning}`;
   }
 
   exportButton.disabled = samples.length === 0;
@@ -469,6 +480,28 @@ function escapeHtml(value) {
     '"': "&quot;",
     "'": "&#039;",
   }[char]));
+}
+
+function importResultMessage(imported, skipped) {
+  if (!skipped.length) return "";
+  const firstSkipped = skipped[0];
+  const importedText = `${imported} imported`;
+  const skippedText = `${skipped.length} skipped`;
+  return `${importedText}, ${skippedText}. First skipped: ${firstSkipped.name} (${firstSkipped.reason}).`;
+}
+
+function readableError(error) {
+  if (error?.message) return error.message;
+  if (error?.name) return error.name;
+  return "browser could not decode it";
+}
+
+function singleKeyMappingWarning() {
+  if (!samples.length || wideRangeInput.checked) return "";
+  const firstKey = clampNumber(firstKeyInput.value, 0, 127, 60);
+  const uniqueKeys = 128 - firstKey;
+  if (samples.length <= uniqueKeys) return "";
+  return `Only ${uniqueKeys} samples can get unique single-key mappings from ${midiNoteName(firstKey)} upward; later samples share MIDI 127 unless remapped.`;
 }
 
 function setBusy(message) {
